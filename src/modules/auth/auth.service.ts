@@ -69,7 +69,7 @@ const loginUserFromDB = async (payload: TLoginPayload) => {
   };
 
  // secret key geraret
-  const secretKey = (config.secret || "mySuperSecretLongTokenKey123456!") as string;
+ const secretKey = (config && "secret" in config ? config.secret : "mySuperSecretLongTokenKey123456!") as string;
   
   const token = jwt.sign(jwtPayload, secretKey, {
     expiresIn: "1d",
