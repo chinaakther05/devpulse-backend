@@ -3,7 +3,6 @@ import jwt from "jsonwebtoken";
 import { pool } from "../../db";
 import config from "../../config";
 
-// টাইপ ডিফাইন
 type TSignupPayload = {
   name: string;
   email: string;
@@ -16,15 +15,17 @@ type TLoginPayload = {
   password: string;
 };
 
-// ১. ডাটাবেজে ইউজার রেজিস্ট্রেশন করা
+
+//  User Register 
+
 const registerUserIntoDB = async (payload: TSignupPayload) => {
   const { name, email, password, role } = payload;
 
-  // পাসওয়ার্ড হ্যাশ করা (Salt rounds: 10)
+  // hash password
   const saltRounds = 10;
   const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-  // Raw SQL কুয়েরি (পাসওয়ার্ড ছাড়া বাকি ডাটা RETURNING করা হয়েছে)
+  // user database
   const result = await pool.query(
     `INSERT INTO users (name, email, password, role) 
      VALUES ($1, $2, $3, $4) 
@@ -35,43 +36,48 @@ const registerUserIntoDB = async (payload: TSignupPayload) => {
   return result.rows[0];
 };
 
-// ২. ইউজার লগইন ও টোকেন জেনারেট করা
+
+// ২. User Login & Token Generate 
+
 const loginUserFromDB = async (payload: TLoginPayload) => {
   const { email, password } = payload;
 
-  // ইমেইল দিয়ে ইউজার খুঁজে বের করা
+ // user  email
   const userData = await pool.query(
     `SELECT * FROM users WHERE email = $1`,
     [email]
   );
 
+  // user error handling
   if (userData.rows.length === 0) {
     throw new Error("Invalid Credentials");
   }
 
   const user = userData.rows[0];
 
-  // পাসওয়ার্ড ম্যাচ করানো
+  
   const matchPassword = await bcrypt.compare(password, user.password);
   if (!matchPassword) {
     throw new Error("Invalid Credentials");
   }
 
-  // 💡 রিকোয়ারমেন্টের Hint অনুযায়ী JWT পেলোড সেট করা
+  // JWT token
   const jwtPayload = {
     id: user.id,
     name: user.name,
-    role: user.role, // পরবর্তীতে পারমিশন চেক করতে এটি লাগবে
+    role: user.role, 
   };
 
-  // JWT সাইন করা
- const token = jwt.sign(jwtPayload, config.secret! as string, {
-  expiresIn: "1d",
-});
-  // রেসপন্স থেকে পাসওয়ারড সিকিউরলি বাদ দেওয়া
+ // secret key geraret
+  const secretKey = (config.secret || "mySuperSecretLongTokenKey123456!") as string;
+  
+  const token = jwt.sign(jwtPayload, secretKey, {
+    expiresIn: "1d",
+  });
+  
+  
   const { password: _, ...userWithoutPassword } = user;
 
-  // রিকোয়ারমেন্টের সেম টু সেম প্রোপার্টি ফরম্যাট (token এবং user)
   return {
     token,
     user: userWithoutPassword,
