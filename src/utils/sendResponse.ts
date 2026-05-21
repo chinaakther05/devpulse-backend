@@ -1,29 +1,18 @@
-import { type Response } from 'express';
+import type { Response } from "express";
 
 
-export const sendSuccessResponse = (
-  res: Response,
-  statusCode: number,
-  message: string,
-  data: any
-) => {
-  return res.status(statusCode).json({
-    success: true,
-    message: message,
-    data: data,
-  });
+type TResponse<T> = {
+  statusCode: number;
+  success: boolean;
+  message: string;
+  data: T;
 };
 
-
-export const sendErrorResponse = (
-  res: Response,
-  statusCode: number,
-  message: string,
-  errors: any
-) => {
-  return res.status(statusCode).json({
-    success: false,
-    message: message,
-    errors: errors,
+export const sendResponse = <T>(res: Response, data: TResponse<T>) => {
+  res.status(data.statusCode).json({
+    success: data.success,
+    statusCode: data.statusCode,
+    message: data.message,
+    data: data.data,
   });
 };
