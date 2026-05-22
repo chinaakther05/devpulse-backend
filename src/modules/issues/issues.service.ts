@@ -25,6 +25,67 @@ const createIssueIntoDB = async (payload: CreateIssuePayload, reporterId: number
   return result.rows[0] as IssueDbRow;
 };
 
+
+//  Get all issues 
+const getAllIssuesFromDB = async (filters: { sort?: string; type?: string; status?: string }) => {
+  const { sort, type, status } = filters;
+  
+  
+  let queryText = `SELECT id, title, description, type, status, reporter_id, created_at, updated_at FROM issues WHERE 1=1`;
+  const queryParams: any[] = [];
+
+  if (type) {
+    queryParams.push(type);
+    queryText += ` AND type = $${queryParams.length}`;
+  }
+
+  //  open, in_progress, resolved 
+  if (status) {
+    queryParams.push(status);
+    queryText += ` AND status = $${queryParams.length}`;
+  }
+
+  if (sort === "oldest") {
+    queryText += ` ORDER BY created_at ASC`;
+  } else {
+    queryText += ` ORDER BY created_at DESC`; 
+  }
+
+  const issueResult = await pool.query(queryText, queryParams);
+  const issues = issueResult.rows;
+
+  if (issues.length === 0) {
+    return [];
+  }
+
+  //  reporter_id 
+  const reporterIds = [...new Set(issues.map(issue => issue.reporter_id))];
+
+  
+  const userQueryText = `SELECT id, name, role FROM users WHERE id = ANY($1)`;
+  const userResult = await pool.query(userQueryText, [reporterIds]);
+  const users = userResult.rows;
+
+  
+  const userMap = users.reduce((acc: any, user: any) => {
+    acc[user.id] = user;
+    return acc;
+  }, {});
+
+  
+  const formattedIssues = issues.map(issue => {
+    const { reporter_id, ...issueData } = issue; 
+    return {
+      ...issueData,
+      reporter: userMap[reporter_id] || null 
+    };
+  });
+
+  return formattedIssues;
+};
+
+
 export const issuesService = {
   createIssueIntoDB,
+  getAllIssuesFromDB, 
 };
