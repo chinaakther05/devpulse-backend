@@ -3,6 +3,8 @@ import { authService } from "./auth.service";
 import { sendResponse } from "../../utils/sendResponse";
 import type { Request, Response } from "express";
 
+
+// signup
 export const signupController = async (req: Request, res: Response) => {
   try {
     const result = await authService.registerUserIntoDB(req.body);
@@ -22,6 +24,7 @@ export const signupController = async (req: Request, res: Response) => {
   }
 };
 
+// login
 export const loginController = async (req: Request, res: Response) => {
   try {
     const result = await authService.loginUserFromDB(req.body);

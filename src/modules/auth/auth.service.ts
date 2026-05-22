@@ -37,7 +37,7 @@ const registerUserIntoDB = async (payload: TSignupPayload) => {
 };
 
 
-// ২. User Login & Token Generate 
+//  User Login & Token Generate 
 
 const loginUserFromDB = async (payload: TLoginPayload) => {
   const { email, password } = payload;
