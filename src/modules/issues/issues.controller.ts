@@ -59,7 +59,8 @@ const getAllIssues = async (req: Request, res: Response, next: NextFunction): Pr
 const getSingleIssue = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   const { id } = req.params;
   try {
-    const result = await issuesService.getSingleIssueFromDB(id);
+    
+    const result = await issuesService.getSingleIssueFromDB(id as string);
 
    
     if (!result) {
@@ -70,17 +71,59 @@ const getSingleIssue = async (req: Request, res: Response, next: NextFunction): 
       return; 
     }
 
-   
+    
     res.status(200).json({
       success: true,
-      data: result, 
+      data: result,
     });
 
   } catch (error) {
-    next(error); 
+    next(error);
   }
 };
 
+// 6. Update Issue 
+const updateIssue = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  const { id } = req.params;
+  const { title, description, type } = req.body;
+  
+  //  authMiddleware 
+  const userId = (req as any).user.id;
+  const userRole = (req as any).user.role;
+
+  try {
+   const result = await issuesService.updateIssueInDB(
+  id as string, 
+  userId, 
+  userRole, 
+  { title, description, type }
+);
+
+   
+    if (result.errorType) {
+      if (result.errorType === "NOT_FOUND") {
+        res.status(404).json({ success: false, message: result.message });
+        return;
+      }
+      if (result.errorType === "FORBIDDEN") {
+        res.status(403).json({ success: false, message: result.message });
+        return;
+      }
+      res.status(400).json({ success: false, message: result.message });
+      return;
+    }
+
+  
+    res.status(200).json({
+      success: true,
+      message: "Issue updated successfully",
+      data: result.data, 
+    });
+
+  } catch (error) {
+    next(error);
+  }
+};
 
 
 
@@ -88,4 +131,5 @@ export const issuesController = {
   createIssue,
   getAllIssues,
   getSingleIssue,
+  updateIssue,
 };

@@ -121,8 +121,77 @@ const getSingleIssueFromDB = async (id: string) => {
   };
 };
 
+
+//  Update Issue Service 
+const updateIssueInDB = async (
+  id: string,
+  userId: number,
+  userRole: string,
+  updateData: { title?: string; description?: string; type?: string }
+) => {
+  
+  const findQuery = `SELECT * FROM issues WHERE id = $1`;
+  const findResult = await pool.query(findQuery, [id]);
+
+  if (findResult.rows.length === 0) {
+    return { errorType: "NOT_FOUND", message: "Issue not found" };
+  }
+
+  const issue = findResult.rows[0];
+
+  
+  if (userRole === "contributor") {
+    if (issue.reporter_id !== userId) {
+      return { errorType: "FORBIDDEN", message: "You are not authorized to update this issue" };
+    }
+    if (issue.status !== "open") {
+      return { errorType: "FORBIDDEN", message: "Contributors can only update issues with 'open' status" };
+    }
+  }
+
+ 
+  const fields: string[] = [];
+  const values: any[] = [];
+  let paramIndex = 1;
+
+  if (updateData.title) {
+    fields.push(`title = $${paramIndex++}`);
+    values.push(updateData.title);
+  }
+  if (updateData.description) {
+    fields.push(`description = $${paramIndex++}`);
+    values.push(updateData.description);
+  }
+  if (updateData.type) {
+    fields.push(`type = $${paramIndex++}`);
+    values.push(updateData.type);
+  }
+
+ 
+  if (fields.length === 0) {
+    return { errorType: "BAD_REQUEST", message: "No fields provided for update" };
+  }
+
+  
+  fields.push(`updated_at = NOW()`);
+
+ 
+  values.push(id);
+  const updateQuery = `
+    UPDATE issues 
+    SET ${fields.join(", ")} 
+    WHERE id = $${paramIndex} 
+    RETURNING id, title, description, type, status, reporter_id, created_at, updated_at
+  `;
+
+  const result = await pool.query(updateQuery, values);
+  return { success: true, data: result.rows[0] };
+};
+
+
 export const issuesService = {
   createIssueIntoDB,
   getAllIssuesFromDB, 
   getSingleIssueFromDB,
+  updateIssueInDB,
 };
