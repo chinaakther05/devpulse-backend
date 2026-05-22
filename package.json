@@ -4,7 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "tsx watch --env-file=.env ./src/index.ts"
+    "dev": "tsx watch --env-file=.env ./src/index.ts",
+    "build": "tsup",
+    "start": "node dist/index.js"
   },
   "keywords": [],
   "author": "",
@@ -28,6 +30,7 @@
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",
-    "pg": "^8.21.0"
+    "pg": "^8.21.0",
+    "tsup": "^8.5.1"
   }
 }

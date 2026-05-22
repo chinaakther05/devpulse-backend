@@ -4,7 +4,7 @@
 A robust RESTful API built with Node.js, Express, and TypeScript for managing and tracking software application issues. It includes secure JWT-based authentication, full CRUD operations, and is fully optimized for production deployment using a PostgreSQL database.
 
 ## 🔗 Live Application
-- **Live API URL:** 
+- **Live API URL:** https://devpulse-backend-gynjbvrru-sohag2.vercel.app/
 - **Database Provider:** NeonDB / Supabase / ElephantSQL (PostgreSQL)
 
 ---
